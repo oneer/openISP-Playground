@@ -1,4 +1,4 @@
-import { Download, RotateCcw } from "lucide-react";
+import { Download, Languages, RotateCcw } from "lucide-react";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { ImageCanvas } from "../components/ImageCanvas";
@@ -9,15 +9,70 @@ import { createSyntheticBayerSample } from "../samples/syntheticBayer";
 
 type NumericPath = "blc.blackLevel" | "awb.rGain" | "awb.gGain" | "awb.bGain" | "gamma.gamma";
 type TogglePath = "blc.enabled" | "awb.enabled" | "gamma.enabled";
+type Language = "en" | "zh";
 
-const stageLabels = ["BLC", "AWB", "Demosaic", "Gamma"];
+const pipelineStageLabels = {
+  en: ["BLC", "AWB", "Demosaic", "Gamma"],
+  zh: ["黑电平", "白平衡", "去马赛克", "Gamma"],
+} satisfies Record<Language, string[]>;
+
+const stageNameById: Record<Language, Record<string, string>> = {
+  en: {
+    bayer: "Bayer Preview",
+    demosaic: "Demosaic",
+    final: "Final RGB",
+  },
+  zh: {
+    bayer: "Bayer 预览",
+    demosaic: "去马赛克",
+    final: "最终 RGB",
+  },
+};
+
+const copy = {
+  en: {
+    sample: "Synthetic RGGB sample / 128 x 96 / 12-bit",
+    reset: "Reset",
+    resetTitle: "Reset parameters",
+    exportPreset: "Export Preset",
+    exportTitle: "Export preset JSON",
+    pipeline: "Pipeline",
+    preview: "Preview",
+    parameters: "Parameters",
+    blackLevel: "Black Level",
+    level: "Level",
+    whiteBalance: "White Balance",
+    gamma: "Gamma",
+    curve: "Curve",
+    language: "Language",
+  },
+  zh: {
+    sample: "合成 RGGB 样本 / 128 x 96 / 12-bit",
+    reset: "重置",
+    resetTitle: "重置参数",
+    exportPreset: "导出预设",
+    exportTitle: "导出 JSON 预设",
+    pipeline: "处理流水线",
+    preview: "预览阶段",
+    parameters: "参数调节",
+    blackLevel: "黑电平",
+    level: "电平",
+    whiteBalance: "白平衡",
+    gamma: "Gamma",
+    curve: "曲线",
+    language: "语言",
+  },
+} satisfies Record<Language, Record<string, string>>;
 
 export function App() {
   const [config, setConfig] = useState<PipelineConfig>(defaultConfig);
   const [selectedStageId, setSelectedStageId] = useState("final");
+  const [language, setLanguage] = useState<Language>("zh");
   const raw = useMemo(() => createSyntheticBayerSample(), []);
   const result = useMemo(() => runPipeline(raw, config), [raw, config]);
   const selectedStage = result.stages.find((stage) => stage.id === selectedStageId) ?? result.stages.at(-1)!;
+  const t = copy[language];
+  const stageNames = stageNameById[language];
 
   function updateNumber(path: NumericPath, value: number) {
     setConfig((current) => {
@@ -64,32 +119,49 @@ export function App() {
   return (
     <main className="app-shell">
       <header className="top-bar">
-        <div>
+        <div className="brand-block">
           <h1>openISP Playground</h1>
-          <p>Synthetic RGGB sample · 128 x 96 · 12-bit</p>
+          <p>{t.sample}</p>
         </div>
         <div className="top-actions">
-          <button type="button" onClick={() => setConfig(defaultConfig)} title="Reset parameters">
+          <div className="language-switch" aria-label={t.language}>
+            <Languages size={17} />
+            <button
+              type="button"
+              className={language === "en" ? "is-active" : ""}
+              onClick={() => setLanguage("en")}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              className={language === "zh" ? "is-active" : ""}
+              onClick={() => setLanguage("zh")}
+            >
+              中文
+            </button>
+          </div>
+          <button type="button" onClick={() => setConfig(defaultConfig)} title={t.resetTitle}>
             <RotateCcw size={18} />
-            Reset
+            {t.reset}
           </button>
-          <button type="button" onClick={exportPreset} title="Export preset JSON">
+          <button type="button" className="primary-action" onClick={exportPreset} title={t.exportTitle}>
             <Download size={18} />
-            Export Preset
+            {t.exportPreset}
           </button>
         </div>
       </header>
 
       <section className="workspace">
         <aside className="pipeline-panel" aria-label="Pipeline stages">
-          <h2>Pipeline</h2>
+          <h2>{t.pipeline}</h2>
           <ol>
-            {stageLabels.map((label) => (
+            {pipelineStageLabels[language].map((label) => (
               <li key={label}>{label}</li>
             ))}
           </ol>
           <div className="stage-picker">
-            <label htmlFor="stage-select">Preview</label>
+            <label htmlFor="stage-select">{t.preview}</label>
             <select
               id="stage-select"
               value={selectedStage.id}
@@ -97,7 +169,7 @@ export function App() {
             >
               {result.stages.map((stage) => (
                 <option value={stage.id} key={stage.id}>
-                  {stage.label}
+                  {stageNames[stage.id] ?? stage.label}
                 </option>
               ))}
             </select>
@@ -106,7 +178,7 @@ export function App() {
 
         <section className="viewer-panel" aria-label="Image preview">
           <div className="viewer-header">
-            <h2>{selectedStage.label}</h2>
+            <h2>{stageNames[selectedStage.id] ?? selectedStage.label}</h2>
             <span>{selectedStage.domain.toUpperCase()}</span>
           </div>
           <div className="canvas-frame">
@@ -115,14 +187,14 @@ export function App() {
         </section>
 
         <aside className="parameter-panel" aria-label="ISP parameters">
-          <h2>Parameters</h2>
+          <h2>{t.parameters}</h2>
           <ControlGroup
-            title="Black Level"
+            title={t.blackLevel}
             enabled={config.blc.enabled}
             onToggle={(value) => updateToggle("blc.enabled", value)}
           >
             <Slider
-              label="Level"
+              label={t.level}
               min={0}
               max={512}
               step={1}
@@ -132,22 +204,43 @@ export function App() {
           </ControlGroup>
 
           <ControlGroup
-            title="White Balance"
+            title={t.whiteBalance}
             enabled={config.awb.enabled}
             onToggle={(value) => updateToggle("awb.enabled", value)}
           >
-            <Slider label="R" min={0.5} max={3} step={0.05} value={config.awb.rGain} onChange={(value) => updateNumber("awb.rGain", value)} />
-            <Slider label="G" min={0.5} max={3} step={0.05} value={config.awb.gGain} onChange={(value) => updateNumber("awb.gGain", value)} />
-            <Slider label="B" min={0.5} max={3} step={0.05} value={config.awb.bGain} onChange={(value) => updateNumber("awb.bGain", value)} />
+            <Slider
+              label="R"
+              min={0.5}
+              max={3}
+              step={0.05}
+              value={config.awb.rGain}
+              onChange={(value) => updateNumber("awb.rGain", value)}
+            />
+            <Slider
+              label="G"
+              min={0.5}
+              max={3}
+              step={0.05}
+              value={config.awb.gGain}
+              onChange={(value) => updateNumber("awb.gGain", value)}
+            />
+            <Slider
+              label="B"
+              min={0.5}
+              max={3}
+              step={0.05}
+              value={config.awb.bGain}
+              onChange={(value) => updateNumber("awb.bGain", value)}
+            />
           </ControlGroup>
 
           <ControlGroup
-            title="Gamma"
+            title={t.gamma}
             enabled={config.gamma.enabled}
             onToggle={(value) => updateToggle("gamma.enabled", value)}
           >
             <Slider
-              label="Curve"
+              label={t.curve}
               min={0.6}
               max={3}
               step={0.05}
