@@ -1,0 +1,14 @@
+{
+  "name": "openisp-playground-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "npm --workspace apps/playground run dev",
+    "build": "npm --workspace apps/playground run build",
+    "test": "npm --workspace apps/playground run test"
+  },
+  "workspaces": [
+    "apps/playground"
+  ]
+}
