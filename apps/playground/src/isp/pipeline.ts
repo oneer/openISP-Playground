@@ -34,7 +34,15 @@ export function runPipeline(raw: RawImage, config: PipelineConfig): PipelineResu
     preview: demosaiced,
   });
 
-  const final = config.gamma.enabled ? applyGamma(demosaiced, config.gamma.gamma) : demosaiced;
+  const colorCorrected = config.ccm.enabled ? applyColorCorrection(demosaiced, config.ccm.matrix) : demosaiced;
+  stages.push({
+    id: "ccm",
+    label: "Color Matrix",
+    domain: "rgb" as const,
+    preview: colorCorrected,
+  });
+
+  const final = config.gamma.enabled ? applyGamma(colorCorrected, config.gamma.gamma) : colorCorrected;
   stages.push({
     id: "final",
     label: "Final RGB",
@@ -107,6 +115,23 @@ function applyGamma(image: RgbImage, gamma: number): RgbImage {
     out[i] = Math.round(Math.pow(image.data[i] / 255, exponent) * 255);
     out[i + 1] = Math.round(Math.pow(image.data[i + 1] / 255, exponent) * 255);
     out[i + 2] = Math.round(Math.pow(image.data[i + 2] / 255, exponent) * 255);
+    out[i + 3] = image.data[i + 3];
+  }
+
+  return { ...image, data: out };
+}
+
+function applyColorCorrection(image: RgbImage, matrix: PipelineConfig["ccm"]["matrix"]): RgbImage {
+  const out = new Uint8ClampedArray(image.data.length);
+
+  for (let i = 0; i < image.data.length; i += 4) {
+    const r = image.data[i];
+    const g = image.data[i + 1];
+    const b = image.data[i + 2];
+
+    out[i] = clampByte(r * matrix[0][0] + g * matrix[0][1] + b * matrix[0][2]);
+    out[i + 1] = clampByte(r * matrix[1][0] + g * matrix[1][1] + b * matrix[1][2]);
+    out[i + 2] = clampByte(r * matrix[2][0] + g * matrix[2][1] + b * matrix[2][2]);
     out[i + 3] = image.data[i + 3];
   }
 
@@ -189,4 +214,8 @@ function toByte(value: number, maxValue: number): number {
 
 function clamp16(value: number, maxValue: number): number {
   return Math.max(0, Math.min(maxValue, Math.round(value)));
+}
+
+function clampByte(value: number): number {
+  return Math.max(0, Math.min(255, Math.round(value)));
 }

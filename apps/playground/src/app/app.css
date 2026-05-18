@@ -387,6 +387,31 @@ h2 {
   text-align: right;
 }
 
+.matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.matrix-grid input {
+  width: 100%;
+  min-height: 34px;
+  padding: 0 8px;
+  border: 1px solid #c9d2cd;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #17201d;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.matrix-grid input:focus {
+  border-color: #1c8d73;
+  outline: 2px solid rgb(28 141 115 / 18%);
+  outline-offset: 0;
+}
+
 @media (max-width: 980px) {
   .top-bar {
     align-items: flex-start;

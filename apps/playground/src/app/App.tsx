@@ -8,23 +8,25 @@ import type { PipelineConfig } from "../isp/types";
 import { createSyntheticBayerSample } from "../samples/syntheticBayer";
 
 type NumericPath = "blc.blackLevel" | "awb.rGain" | "awb.gGain" | "awb.bGain" | "gamma.gamma";
-type TogglePath = "blc.enabled" | "awb.enabled" | "gamma.enabled";
+type TogglePath = "blc.enabled" | "awb.enabled" | "ccm.enabled" | "gamma.enabled";
 type Language = "en" | "zh";
 
 const pipelineStageLabels = {
-  en: ["BLC", "AWB", "Demosaic", "Gamma"],
-  zh: ["黑电平", "白平衡", "去马赛克", "Gamma"],
+  en: ["BLC", "AWB", "Demosaic", "CCM", "Gamma"],
+  zh: ["黑电平", "白平衡", "去马赛克", "色彩矩阵", "Gamma"],
 } satisfies Record<Language, string[]>;
 
 const stageNameById: Record<Language, Record<string, string>> = {
   en: {
     bayer: "Bayer Preview",
     demosaic: "Demosaic",
+    ccm: "Color Matrix",
     final: "Final RGB",
   },
   zh: {
     bayer: "Bayer 预览",
     demosaic: "去马赛克",
+    ccm: "色彩矩阵",
     final: "最终 RGB",
   },
 };
@@ -42,6 +44,7 @@ const copy = {
     blackLevel: "Black Level",
     level: "Level",
     whiteBalance: "White Balance",
+    ccm: "Color Matrix",
     gamma: "Gamma",
     curve: "Curve",
     language: "Language",
@@ -62,6 +65,7 @@ const copy = {
     blackLevel: "黑电平",
     level: "电平",
     whiteBalance: "白平衡",
+    ccm: "色彩矩阵",
     gamma: "Gamma",
     curve: "曲线",
     language: "语言",
@@ -112,6 +116,8 @@ export function App() {
         next.blc.enabled = value;
       } else if (path === "awb.enabled") {
         next.awb.enabled = value;
+      } else if (path === "ccm.enabled") {
+        next.ccm.enabled = value;
       } else {
         next.gamma.enabled = value;
       }
@@ -131,6 +137,14 @@ export function App() {
 
   function updateZoom(delta: number) {
     setZoomScale((current) => Math.max(minZoomScale, Math.min(maxZoomScale, current + delta)));
+  }
+
+  function updateCcmValue(row: number, column: number, value: number) {
+    setConfig((current) => {
+      const next = structuredClone(current);
+      next.ccm.matrix[row][column] = value;
+      return next;
+    });
   }
 
   return (
@@ -277,6 +291,29 @@ export function App() {
               value={config.awb.bGain}
               onChange={(value) => updateNumber("awb.bGain", value)}
             />
+          </ControlGroup>
+
+          <ControlGroup
+            title={t.ccm}
+            enabled={config.ccm.enabled}
+            onToggle={(value) => updateToggle("ccm.enabled", value)}
+          >
+            <div className="matrix-grid" aria-label={t.ccm}>
+              {config.ccm.matrix.map((row, rowIndex) =>
+                row.map((value, columnIndex) => (
+                  <input
+                    key={`${rowIndex}-${columnIndex}`}
+                    type="number"
+                    min={-2}
+                    max={2}
+                    step={0.01}
+                    value={value}
+                    onChange={(event) => updateCcmValue(rowIndex, columnIndex, Number(event.target.value))}
+                    aria-label={`${t.ccm} ${rowIndex + 1}-${columnIndex + 1}`}
+                  />
+                )),
+              )}
+            </div>
           </ControlGroup>
 
           <ControlGroup

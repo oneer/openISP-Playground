@@ -14,6 +14,12 @@ export type RgbImage = {
   data: Uint8ClampedArray;
 };
 
+export type ColorMatrix3x3 = [
+  [number, number, number],
+  [number, number, number],
+  [number, number, number],
+];
+
 export type PipelineConfig = {
   blc: {
     enabled: boolean;
@@ -28,6 +34,10 @@ export type PipelineConfig = {
   gamma: {
     enabled: boolean;
     gamma: number;
+  };
+  ccm: {
+    enabled: boolean;
+    matrix: ColorMatrix3x3;
   };
 };
 

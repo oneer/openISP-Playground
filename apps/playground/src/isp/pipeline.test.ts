@@ -18,6 +18,27 @@ describe("runPipeline", () => {
     const raw = createSyntheticBayerSample(8, 8);
     const result = runPipeline(raw, defaultConfig);
 
-    expect(result.stages.map((stage) => stage.id)).toEqual(["bayer", "demosaic", "final"]);
+    expect(result.stages.map((stage) => stage.id)).toEqual(["bayer", "demosaic", "ccm", "final"]);
+  });
+
+  it("applies a color correction matrix before gamma", () => {
+    const raw = createSyntheticBayerSample(8, 8);
+    const withoutCcm = runPipeline(raw, {
+      ...defaultConfig,
+      ccm: { ...defaultConfig.ccm, enabled: false },
+    });
+    const withCcm = runPipeline(raw, {
+      ...defaultConfig,
+      ccm: {
+        enabled: true,
+        matrix: [
+          [1.8, 0, 0],
+          [0, 0.6, 0],
+          [0, 0, 0.6],
+        ],
+      },
+    });
+
+    expect(Array.from(withCcm.final.data)).not.toEqual(Array.from(withoutCcm.final.data));
   });
 });

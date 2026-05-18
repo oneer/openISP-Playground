@@ -11,6 +11,14 @@ export const defaultConfig: PipelineConfig = {
     gGain: 1,
     bGain: 1.35,
   },
+  ccm: {
+    enabled: true,
+    matrix: [
+      [1.12, -0.06, -0.06],
+      [-0.04, 1.08, -0.04],
+      [-0.02, -0.08, 1.1],
+    ],
+  },
   gamma: {
     enabled: true,
     gamma: 2.2,
