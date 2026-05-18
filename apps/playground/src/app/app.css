@@ -249,7 +249,53 @@ h2 {
   background: #ffffff;
 }
 
-.viewer-header span {
+.viewer-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.zoom-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 34px;
+  padding: 3px;
+  border: 1px solid #d0d9d5;
+  border-radius: 6px;
+  background: #f8faf9;
+}
+
+.zoom-controls button {
+  width: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.zoom-controls button:hover {
+  background: #e8efec;
+}
+
+.zoom-controls button:disabled {
+  color: #a5b0ab;
+  cursor: not-allowed;
+}
+
+.zoom-controls output {
+  min-width: 48px;
+  color: #17201d;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  text-align: center;
+}
+
+.viewer-tools > span {
   min-width: 44px;
   padding: 5px 8px;
   border-radius: 999px;
@@ -262,19 +308,26 @@ h2 {
 }
 
 .canvas-frame {
-  display: grid;
-  place-items: center;
+  display: block;
   min-height: 0;
   padding: 26px;
+  overflow: auto;
   background:
     linear-gradient(135deg, rgb(28 141 115 / 12%), transparent 38%),
     linear-gradient(315deg, rgb(222 92 112 / 12%), transparent 34%),
     #e2e9e5;
 }
 
+.canvas-stage {
+  display: grid;
+  place-items: center;
+  min-width: max-content;
+  min-height: 100%;
+}
+
 .image-canvas {
-  width: min(100%, 920px);
   height: auto;
+  max-width: none;
   image-rendering: pixelated;
   border: 1px solid #4f615a;
   border-radius: 4px;

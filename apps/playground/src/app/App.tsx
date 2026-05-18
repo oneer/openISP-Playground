@@ -1,4 +1,4 @@
-import { Download, Languages, RotateCcw } from "lucide-react";
+import { Download, Languages, Maximize2, RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { ImageCanvas } from "../components/ImageCanvas";
@@ -45,6 +45,10 @@ const copy = {
     gamma: "Gamma",
     curve: "Curve",
     language: "Language",
+    zoom: "Zoom",
+    zoomIn: "Zoom in",
+    zoomOut: "Zoom out",
+    resetZoom: "Reset zoom",
   },
   zh: {
     sample: "合成 RGGB 样本 / 128 x 96 / 12-bit",
@@ -61,13 +65,22 @@ const copy = {
     gamma: "Gamma",
     curve: "曲线",
     language: "语言",
+    zoom: "缩放",
+    zoomIn: "放大",
+    zoomOut: "缩小",
+    resetZoom: "重置缩放",
   },
 } satisfies Record<Language, Record<string, string>>;
+
+const minZoomScale = 1;
+const defaultZoomScale = 5;
+const maxZoomScale = 10;
 
 export function App() {
   const [config, setConfig] = useState<PipelineConfig>(defaultConfig);
   const [selectedStageId, setSelectedStageId] = useState("final");
   const [language, setLanguage] = useState<Language>("zh");
+  const [zoomScale, setZoomScale] = useState(defaultZoomScale);
   const raw = useMemo(() => createSyntheticBayerSample(), []);
   const result = useMemo(() => runPipeline(raw, config), [raw, config]);
   const selectedStage = result.stages.find((stage) => stage.id === selectedStageId) ?? result.stages.at(-1)!;
@@ -114,6 +127,10 @@ export function App() {
     link.download = "openisp-playground-preset.json";
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  function updateZoom(delta: number) {
+    setZoomScale((current) => Math.max(minZoomScale, Math.min(maxZoomScale, current + delta)));
   }
 
   return (
@@ -179,10 +196,38 @@ export function App() {
         <section className="viewer-panel" aria-label="Image preview">
           <div className="viewer-header">
             <h2>{stageNames[selectedStage.id] ?? selectedStage.label}</h2>
-            <span>{selectedStage.domain.toUpperCase()}</span>
+            <div className="viewer-tools">
+              <div className="zoom-controls" aria-label={t.zoom}>
+                <button
+                  type="button"
+                  onClick={() => updateZoom(-1)}
+                  disabled={zoomScale <= minZoomScale}
+                  title={t.zoomOut}
+                  aria-label={t.zoomOut}
+                >
+                  <ZoomOut size={16} />
+                </button>
+                <output>{Math.round(zoomScale * 100)}%</output>
+                <button
+                  type="button"
+                  onClick={() => updateZoom(1)}
+                  disabled={zoomScale >= maxZoomScale}
+                  title={t.zoomIn}
+                  aria-label={t.zoomIn}
+                >
+                  <ZoomIn size={16} />
+                </button>
+                <button type="button" onClick={() => setZoomScale(defaultZoomScale)} title={t.resetZoom}>
+                  <Maximize2 size={16} />
+                </button>
+              </div>
+              <span>{selectedStage.domain.toUpperCase()}</span>
+            </div>
           </div>
           <div className="canvas-frame">
-            <ImageCanvas image={selectedStage.preview} />
+            <div className="canvas-stage">
+              <ImageCanvas image={selectedStage.preview} zoomScale={zoomScale} />
+            </div>
           </div>
         </section>
 

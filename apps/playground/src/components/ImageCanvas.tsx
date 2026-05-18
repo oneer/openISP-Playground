@@ -3,9 +3,10 @@ import type { RgbImage } from "../isp/types";
 
 type ImageCanvasProps = {
   image: RgbImage;
+  zoomScale: number;
 };
 
-export function ImageCanvas({ image }: ImageCanvasProps) {
+export function ImageCanvas({ image, zoomScale }: ImageCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -25,5 +26,12 @@ export function ImageCanvas({ image }: ImageCanvasProps) {
     context.putImageData(imageData, 0, 0);
   }, [image]);
 
-  return <canvas ref={canvasRef} className="image-canvas" aria-label="ISP preview canvas" />;
+  return (
+    <canvas
+      ref={canvasRef}
+      className="image-canvas"
+      style={{ width: `${image.width * zoomScale}px` }}
+      aria-label="ISP preview canvas"
+    />
+  );
 }
