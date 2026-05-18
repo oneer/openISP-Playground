@@ -1,43 +1,94 @@
 # openISP Playground
 
-基于浏览器的 ISP（图像信号处理器）交互式演示，用于学习、调节和可视化 RAW 到 RGB 的图像处理流水线。无需安装 — 打开网页即可探索。
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+基于浏览器的 ISP（图像信号处理器）交互式工具，用于学习、调节和可视化 RAW 到 RGB 的图像处理流水线。完全在浏览器中运行 — 无需后端，无需安装。
 
 [English](README.md)
 
-## 概述
+## 处理流水线
 
-openISP Playground 使用 Canvas 2D 在浏览器中直接运行 ISP 处理流水线。通过滑块调节参数、查看中间处理阶段，并实时观察输出变化。处理流水线的算法参考了 [cruxopen/openISP](https://github.com/cruxopen/openISP) 并移植为 TypeScript 实现。
+```
+Bayer RAW → BLC（黑电平校正）→ AWB（白平衡）→ 去马赛克 → CCM（色彩矩阵）→ Gamma → RGB 输出
+```
 
-### 处理流水线
+每个阶段都会生成预览图像，可在 UI 中选择查看。参数通过滑块和数值输入实时调节，处理结果通过 Canvas 2D 即时呈现。
 
-**Bayer 输入 → 黑电平校正 → 白平衡 → 去马赛克 → 色彩矩阵 → Gamma → RGB 预览**
+### 各阶段说明
 
-| 阶段 | 说明 |
-|------|------|
-| BLC（黑电平校正） | 减去传感器黑电平偏移 |
-| AWB（自动白平衡） | 对各通道应用 RGB 增益 |
-| 去马赛克（双线性） | 从 Bayer CFA 重建全彩 RGB |
-| CCM（色彩校正矩阵） | 应用 3×3 色彩变换 |
-| Gamma | 应用幂律 Gamma 编码 |
+| 阶段 | 数据域 | 说明 |
+|------|--------|------|
+| BLC（黑电平校正） | Bayer | 减去每个像素的光学黑电平偏移，设定真实的零值基准 |
+| AWB（白平衡） | Bayer | 对 R/G/B 各通道应用独立增益，补偿光源色温差异 |
+| 去马赛克 | Bayer → RGB | 使用 3×3 邻域双线性插值，从 Bayer CFA 重建每个像素的完整 RGB |
+| CCM（色彩校正矩阵） | RGB | 通过 3×3 矩阵乘法将传感器 RGB 转换到目标色彩空间 |
+| Gamma | RGB | 应用幂律编码（V<sub>out</sub> = V<sub>in</sub><sup>1/γ</sup>），生成适合显示的图像 |
 
-### 功能
+## 架构
 
-- 交互式参数滑块，实时预览
-- 流水线阶段查看（Bayer、去马赛克、色彩矩阵、最终 RGB）
-- 独立开关各个处理阶段
-- 导出预设为 JSON
-- 中英文双语界面
-- 缩放控件，支持像素级查看
-- 内置合成 RGGB 样本图像（128×96，12-bit）
+```
+┌─────────────┐    ┌──────────────────┐    ┌────────────┐
+│  参数面板    │───▶│  runPipeline()   │───▶│  Stages[]  │
+│  (React)    │    │  (纯函数)         │    │  → Canvas  │
+└─────────────┘    └──────────────────┘    └────────────┘
+```
+
+流水线执行是一个纯 TypeScript 函数，接收 `RawImage` 和 `PipelineConfig`，返回包含最终 RGB 图像及中间阶段预览的 `PipelineResult`。目前处理在主线程同步执行，128×96 的内置样本图像可在瞬间完成处理。
+
+### 核心类型
+
+```ts
+type BayerPattern = "RGGB" | "BGGR" | "GRBG" | "GBRG";
+
+type RawImage = {
+  width: number;
+  height: number;
+  bitDepth: 8 | 10 | 12 | 14 | 16;
+  pattern: BayerPattern;
+  data: Uint16Array;
+};
+
+type PipelineConfig = {
+  blc:   { enabled: boolean; blackLevel: number };
+  awb:   { enabled: boolean; rGain: number; gGain: number; bGain: number };
+  demosaic: { enabled: boolean };
+  ccm:   { enabled: boolean; matrix: [[number,number,number],[number,number,number],[number,number,number]] };
+  gamma: { enabled: boolean; gamma: number };
+};
+```
+
+## 预设格式
+
+配置可导出为 JSON，方便保存和分享：
+
+```json
+{
+  "name": "default-web-preview",
+  "input": {
+    "width": 128,
+    "height": 96,
+    "bitDepth": 12,
+    "bayerPattern": "RGGB"
+  },
+  "stages": {
+    "blc":   { "enabled": true, "blackLevel": 64 },
+    "awb":   { "enabled": true, "rGain": 1.55, "gGain": 1.0, "bGain": 1.35 },
+    "ccm":   { "enabled": true, "matrix": [[1.12,-0.06,-0.06],[-0.04,1.08,-0.04],[-0.02,-0.08,1.1]] },
+    "gamma": { "enabled": true, "gamma": 2.2 }
+  }
+}
+```
+
+可通过 UI 中的 **导出预设** 按钮导出，或通过 `buildPresetJson()` 接口编程生成。
 
 ## 技术栈
 
-| 层级 | 选择 |
+| 层级 | 选型 |
 |------|------|
-| 框架 | React 19 + TypeScript |
-| 构建 | Vite |
-| 样式 | 纯 CSS |
+| 框架 | React 19 + TypeScript 5 |
+| 打包 | Vite 7 |
 | 渲染 | Canvas 2D |
+| 图标 | Lucide React |
 | 测试 | Vitest |
 
 ## 快速开始
@@ -46,32 +97,37 @@ openISP Playground 使用 Canvas 2D 在浏览器中直接运行 ISP 处理流水
 # 安装依赖
 npm install
 
-# 启动开发服务器
+# 启动开发服务器（监听 0.0.0.0）
 npm run dev
 
-# 构建生产版本
+# 生产构建
 npm run build
 
 # 运行测试
 npm run test
 ```
 
-开发服务器默认在 `http://localhost:5173` 启动。
-
 ## 项目结构
 
 ```
-apps/playground/
-  src/
-    app/          应用主体和布局
-    components/   图像画布组件
-    isp/          处理流水线、类型定义、预设
-    samples/      合成 Bayer 样本生成器
-third_party/      openISP 子模块（参考实现）
+openISP Playground/
+├── apps/playground/src/
+│   ├── app/App.tsx            # 应用主体、布局、国际化
+│   ├── components/
+│   │   └── ImageCanvas.tsx    # Canvas 2D 图像渲染组件
+│   ├── isp/
+│   │   ├── pipeline.ts        # 流水线执行器及各阶段算法
+│   │   ├── types.ts           # 共享类型定义
+│   │   └── presets.ts         # 默认配置和序列化
+│   └── samples/
+│       └── syntheticBayer.ts  # 程序化 RGGB 测试图像生成器
+├── third_party/openISP/       # 参考实现（Git 子模块）
+├── LICENSE
+└── THIRD_PARTY_NOTICES.md
 ```
 
 ## 许可证
 
 MIT © 2026 万一
 
-上游归属声明请参阅 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+本项目算法参考自 [cruxopen/openISP](https://github.com/cruxopen/openISP)。上游归属声明详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
