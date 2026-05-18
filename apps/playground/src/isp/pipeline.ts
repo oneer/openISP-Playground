@@ -1,4 +1,11 @@
-import type { BayerPattern, PipelineConfig, PipelineResult, RawImage, RgbImage } from "./types";
+import type {
+  BayerPattern,
+  PipelineConfig,
+  PipelineResult,
+  PipelineStageOutput,
+  RawImage,
+  RgbImage,
+} from "./types";
 
 type Channel = "r" | "g" | "b";
 
@@ -7,7 +14,7 @@ export function runPipeline(raw: RawImage, config: PipelineConfig): PipelineResu
     ? applyBlackLevel(raw, config.blc.blackLevel)
     : raw.data.slice();
 
-  const stages = [
+  const stages: PipelineStageOutput[] = [
     {
       id: "bayer",
       label: "Bayer Preview",

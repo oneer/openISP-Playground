@@ -1,4 +1,5 @@
 import { Download, RotateCcw } from "lucide-react";
+import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { ImageCanvas } from "../components/ImageCanvas";
 import { runPipeline } from "../isp/pipeline";
@@ -21,8 +22,17 @@ export function App() {
   function updateNumber(path: NumericPath, value: number) {
     setConfig((current) => {
       const next = structuredClone(current);
-      const [group, key] = path.split(".") as [keyof PipelineConfig, string];
-      (next[group] as Record<string, number>)[key] = value;
+      if (path === "blc.blackLevel") {
+        next.blc.blackLevel = value;
+      } else if (path === "awb.rGain") {
+        next.awb.rGain = value;
+      } else if (path === "awb.gGain") {
+        next.awb.gGain = value;
+      } else if (path === "awb.bGain") {
+        next.awb.bGain = value;
+      } else {
+        next.gamma.gamma = value;
+      }
       return next;
     });
   }
@@ -30,8 +40,13 @@ export function App() {
   function updateToggle(path: TogglePath, value: boolean) {
     setConfig((current) => {
       const next = structuredClone(current);
-      const [group, key] = path.split(".") as [keyof PipelineConfig, string];
-      (next[group] as Record<string, boolean>)[key] = value;
+      if (path === "blc.enabled") {
+        next.blc.enabled = value;
+      } else if (path === "awb.enabled") {
+        next.awb.enabled = value;
+      } else {
+        next.gamma.enabled = value;
+      }
       return next;
     });
   }
@@ -150,7 +165,7 @@ type ControlGroupProps = {
   title: string;
   enabled: boolean;
   onToggle: (value: boolean) => void;
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 function ControlGroup({ title, enabled, onToggle, children }: ControlGroupProps) {

@@ -19,7 +19,7 @@ export function ImageCanvas({ image }: ImageCanvasProps) {
       return;
     }
 
-    const imageData = new ImageData(image.data, image.width, image.height);
+    const imageData = new ImageData(new Uint8ClampedArray(image.data), image.width, image.height);
     canvas.width = image.width;
     canvas.height = image.height;
     context.putImageData(imageData, 0, 0);
