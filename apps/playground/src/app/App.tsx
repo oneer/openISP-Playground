@@ -1,4 +1,4 @@
-import { Download, ImagePlus, Languages, Maximize2, RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
+import { ChevronDown, Download, ImagePlus, Languages, Maximize2, RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
 import type { ReactNode } from "react";
 import { useMemo, useRef, useState } from "react";
 import { ImageCanvas } from "../components/ImageCanvas";
@@ -497,13 +497,25 @@ type ControlGroupProps = {
 };
 
 function ControlGroup({ title, enabled, onToggle, children }: ControlGroupProps) {
+  const [expanded, setExpanded] = useState(false);
+
   return (
-    <section className="control-group">
-      <label className="control-toggle">
-        <span>{title}</span>
-        <input type="checkbox" checked={enabled} onChange={(event) => onToggle(event.target.checked)} />
-      </label>
-      <div className="control-body">{children}</div>
+    <section className={`control-group ${expanded ? "is-expanded" : ""}`}>
+      <div className="control-header">
+        <button
+          type="button"
+          className="control-disclosure"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((current) => !current)}
+        >
+          <ChevronDown size={16} />
+          <span>{title}</span>
+        </button>
+        <label className="control-switch" aria-label={title}>
+          <input type="checkbox" checked={enabled} onChange={(event) => onToggle(event.target.checked)} />
+        </label>
+      </div>
+      {expanded ? <div className="control-body">{children}</div> : null}
     </section>
   );
 }
