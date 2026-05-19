@@ -21,9 +21,16 @@ export type ColorMatrix3x3 = [
 ];
 
 export type PipelineConfig = {
+  dpc: {
+    enabled: boolean;
+    threshold: number;
+  };
   blc: {
     enabled: boolean;
     blackLevel: number;
+  };
+  aaf: {
+    enabled: boolean;
   };
   awb: {
     enabled: boolean;
@@ -31,13 +38,53 @@ export type PipelineConfig = {
     gGain: number;
     bGain: number;
   };
-  gamma: {
+  bnf: {
     enabled: boolean;
-    gamma: number;
+    strength: number;
+  };
+  cnf: {
+    enabled: boolean;
+    threshold: number;
+    strength: number;
+  };
+  cfa: {
+    enabled: boolean;
+    mode: "bilinear" | "malvar";
   };
   ccm: {
     enabled: boolean;
     matrix: ColorMatrix3x3;
+  };
+  gac: {
+    enabled: boolean;
+    gamma: number;
+  };
+  csc: {
+    enabled: boolean;
+  };
+  hsc: {
+    enabled: boolean;
+    hue: number;
+    saturation: number;
+  };
+  eeh: {
+    enabled: boolean;
+    strength: number;
+    threshold: number;
+  };
+  fcs: {
+    enabled: boolean;
+    strength: number;
+    threshold: number;
+  };
+  bcc: {
+    enabled: boolean;
+    brightness: number;
+    contrast: number;
+  };
+  nlm: {
+    enabled: boolean;
+    strength: number;
   };
 };
 

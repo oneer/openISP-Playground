@@ -104,6 +104,17 @@ h2 {
   flex-wrap: wrap;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .primary-action {
   border-color: #1c8d73;
   background: #1c8d73;
@@ -174,8 +185,8 @@ h2 {
 
 .pipeline-panel ol {
   display: grid;
-  gap: 10px;
-  margin: 18px 0 26px;
+  gap: 8px;
+  margin: 16px 0 22px;
   padding: 0;
   list-style: none;
   counter-reset: stage;
@@ -186,7 +197,7 @@ h2 {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 34px;
+  min-height: 30px;
   color: #35443f;
   font-size: 14px;
   counter-increment: stage;
@@ -195,8 +206,8 @@ h2 {
 .pipeline-panel li::before {
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: #17201d;
   color: #ffffff;
@@ -367,6 +378,13 @@ h2 {
   gap: 12px;
 }
 
+.control-note {
+  margin: 0;
+  color: #68776f;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .slider-row {
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr) 48px;
@@ -385,6 +403,25 @@ h2 {
   color: #17201d;
   font-variant-numeric: tabular-nums;
   text-align: right;
+}
+
+.select-row {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  color: #5f6e68;
+  font-size: 13px;
+}
+
+.select-row select {
+  width: 100%;
+  min-height: 34px;
+  padding: 0 8px;
+  border: 1px solid #c9d2cd;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #17201d;
 }
 
 .matrix-grid {
@@ -424,6 +461,10 @@ h2 {
 
   .workspace {
     grid-template-columns: 1fr;
+  }
+
+  .viewer-panel {
+    order: -1;
   }
 
   .viewer-panel {

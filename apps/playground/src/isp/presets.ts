@@ -1,15 +1,35 @@
 import type { PipelineConfig } from "./types";
 
 export const defaultConfig: PipelineConfig = {
+  dpc: {
+    enabled: true,
+    threshold: 420,
+  },
   blc: {
     enabled: true,
     blackLevel: 64,
+  },
+  aaf: {
+    enabled: false,
   },
   awb: {
     enabled: true,
     rGain: 1.55,
     gGain: 1,
     bGain: 1.35,
+  },
+  bnf: {
+    enabled: false,
+    strength: 0.35,
+  },
+  cnf: {
+    enabled: false,
+    threshold: 180,
+    strength: 0.45,
+  },
+  cfa: {
+    enabled: true,
+    mode: "bilinear",
   },
   ccm: {
     enabled: true,
@@ -19,9 +39,36 @@ export const defaultConfig: PipelineConfig = {
       [-0.02, -0.08, 1.1],
     ],
   },
-  gamma: {
+  gac: {
     enabled: true,
     gamma: 2.2,
+  },
+  csc: {
+    enabled: true,
+  },
+  hsc: {
+    enabled: false,
+    hue: 0,
+    saturation: 1,
+  },
+  eeh: {
+    enabled: false,
+    strength: 0.45,
+    threshold: 10,
+  },
+  fcs: {
+    enabled: false,
+    strength: 0.5,
+    threshold: 18,
+  },
+  bcc: {
+    enabled: false,
+    brightness: 0,
+    contrast: 0,
+  },
+  nlm: {
+    enabled: false,
+    strength: 0.25,
   },
 };
 
