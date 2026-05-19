@@ -1,6 +1,6 @@
 import { ChevronDown, Download, ImagePlus, Languages, Maximize2, RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
 import type { ReactNode } from "react";
-import { useMemo, useRef, useState } from "react";
+import { useDeferredValue, useMemo, useRef, useState } from "react";
 import { ImageCanvas } from "../components/ImageCanvas";
 import { runPipeline } from "../isp/pipeline";
 import { buildPresetJson, defaultConfig } from "../isp/presets";
@@ -222,7 +222,9 @@ export function App() {
   const defaultRaw = useMemo(() => createSyntheticBayerSample(), []);
   const [raw, setRaw] = useState(defaultRaw);
   const [sourceLabel, setSourceLabel] = useState("");
-  const result = useMemo(() => runPipeline(raw, config), [raw, config]);
+  const deferredConfig = useDeferredValue(config);
+  const deferredRaw = useDeferredValue(raw);
+  const result = useMemo(() => runPipeline(deferredRaw, deferredConfig), [deferredRaw, deferredConfig]);
   const selectedStage = result.stages.find((stage) => stage.id === selectedStageId) ?? result.stages.at(-1)!;
   const t = copy[language];
   const stageNames = stageNameById[language];
@@ -546,7 +548,7 @@ function imageFileToRaw(file: File): Promise<RawImage> {
 
     image.onload = () => {
       URL.revokeObjectURL(url);
-      const maxDimension = 512;
+      const maxDimension = 384;
       const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
       const width = Math.max(2, Math.round(image.naturalWidth * scale));
       const height = Math.max(2, Math.round(image.naturalHeight * scale));

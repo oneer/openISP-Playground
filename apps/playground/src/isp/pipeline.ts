@@ -12,40 +12,41 @@ type EdgeMap = Float32Array;
 
 export function runPipeline(raw: RawImage, config: PipelineConfig): PipelineResult {
   const stages: PipelineStageOutput[] = [];
+  const bayerPreviewCache = new Map<Uint16Array, RgbImage>();
 
-  let bayer = config.dpc.enabled ? applyDeadPixelCorrection(raw, raw.data, config.dpc.threshold) : raw.data.slice();
-  pushBayerStage(stages, "dpc", "Dead Pixel Correction", raw, bayer);
+  let bayer = config.dpc.enabled ? applyDeadPixelCorrection(raw, raw.data, config.dpc.threshold) : raw.data;
+  pushBayerStage(stages, "dpc", "Dead Pixel Correction", raw, bayer, bayerPreviewCache);
 
-  bayer = config.blc.enabled ? applyBlackLevel(raw, bayer, config.blc.blackLevel) : bayer.slice();
-  pushBayerStage(stages, "blc", "Black Level Correction", raw, bayer);
+  bayer = config.blc.enabled ? applyBlackLevel(raw, bayer, config.blc.blackLevel) : bayer;
+  pushBayerStage(stages, "blc", "Black Level Correction", raw, bayer, bayerPreviewCache);
 
-  bayer = config.aaf.enabled ? applyAntiAliasingFilter(raw, bayer) : bayer.slice();
-  pushBayerStage(stages, "aaf", "Anti-Aliasing Filter", raw, bayer);
+  bayer = config.aaf.enabled ? applyAntiAliasingFilter(raw, bayer) : bayer;
+  pushBayerStage(stages, "aaf", "Anti-Aliasing Filter", raw, bayer, bayerPreviewCache);
 
-  bayer = config.awb.enabled ? applyWhiteBalance(raw, bayer, config.awb) : bayer.slice();
-  pushBayerStage(stages, "awb", "Auto White Balance", raw, bayer);
+  bayer = config.awb.enabled ? applyWhiteBalance(raw, bayer, config.awb) : bayer;
+  pushBayerStage(stages, "awb", "Auto White Balance", raw, bayer, bayerPreviewCache);
 
-  bayer = config.bnf.enabled ? applyBilateralNoiseFilter(raw, bayer, config.bnf.strength) : bayer.slice();
-  pushBayerStage(stages, "bnf", "Bilateral Noise Filter", raw, bayer);
+  bayer = config.bnf.enabled ? applyBilateralNoiseFilter(raw, bayer, config.bnf.strength) : bayer;
+  pushBayerStage(stages, "bnf", "Bilateral Noise Filter", raw, bayer, bayerPreviewCache);
 
   bayer = config.cnf.enabled
     ? applyChromaNoiseFilter(raw, bayer, config.cnf.threshold, config.cnf.strength)
-    : bayer.slice();
-  pushBayerStage(stages, "cnf", "Chroma Noise Filter", raw, bayer);
+    : bayer;
+  pushBayerStage(stages, "cnf", "Chroma Noise Filter", raw, bayer, bayerPreviewCache);
 
   let rgb = config.cfa.enabled ? demosaic(raw, bayer, config.cfa.mode) : bayerToGrayscalePreview(raw, bayer);
   pushRgbStage(stages, "cfa", "CFA Interpolation", rgb);
 
-  rgb = config.ccm.enabled ? applyColorCorrection(rgb, config.ccm.matrix) : cloneRgb(rgb);
+  rgb = config.ccm.enabled ? applyColorCorrection(rgb, config.ccm.matrix) : rgb;
   pushRgbStage(stages, "ccm", "Color Correction Matrix", rgb);
 
-  rgb = config.gac.enabled ? applyGamma(rgb, config.gac.gamma) : cloneRgb(rgb);
+  rgb = config.gac.enabled ? applyGamma(rgb, config.gac.gamma) : rgb;
   pushRgbStage(stages, "gac", "Gamma Correction", rgb);
 
-  rgb = config.csc.enabled ? applyColorSpaceConversion(rgb) : cloneRgb(rgb);
+  rgb = config.csc.enabled ? applyColorSpaceConversion(rgb) : rgb;
   pushRgbStage(stages, "csc", "Color Space Conversion", rgb);
 
-  rgb = config.hsc.enabled ? applyHueSaturation(rgb, config.hsc.hue, config.hsc.saturation) : cloneRgb(rgb);
+  rgb = config.hsc.enabled ? applyHueSaturation(rgb, config.hsc.hue, config.hsc.saturation) : rgb;
   pushRgbStage(stages, "hsc", "Hue Saturation Control", rgb);
 
   let edgeMap: EdgeMap | undefined;
@@ -54,18 +55,19 @@ export function runPipeline(raw: RawImage, config: PipelineConfig): PipelineResu
     rgb = enhanced.image;
     edgeMap = enhanced.edgeMap;
   } else {
-    edgeMap = computeEdgeMap(rgb);
-    rgb = cloneRgb(rgb);
+    edgeMap = config.fcs.enabled ? computeEdgeMap(rgb) : undefined;
   }
   pushRgbStage(stages, "eeh", "Edge Enhancement", rgb);
 
-  rgb = config.fcs.enabled ? applyFalseColorSuppression(rgb, edgeMap, config.fcs.strength, config.fcs.threshold) : cloneRgb(rgb);
+  rgb = config.fcs.enabled && edgeMap
+    ? applyFalseColorSuppression(rgb, edgeMap, config.fcs.strength, config.fcs.threshold)
+    : rgb;
   pushRgbStage(stages, "fcs", "False Color Suppression", rgb);
 
-  rgb = config.bcc.enabled ? applyBrightnessContrast(rgb, config.bcc.brightness, config.bcc.contrast) : cloneRgb(rgb);
+  rgb = config.bcc.enabled ? applyBrightnessContrast(rgb, config.bcc.brightness, config.bcc.contrast) : rgb;
   pushRgbStage(stages, "bcc", "Brightness Contrast Control", rgb);
 
-  rgb = config.nlm.enabled ? applyNonLocalMeansPreview(rgb, config.nlm.strength) : cloneRgb(rgb);
+  rgb = config.nlm.enabled ? applyNonLocalMeansPreview(rgb, config.nlm.strength) : rgb;
   pushRgbStage(stages, "nlm", "Non-Local Means Denoising", rgb);
 
   return { final: rgb, stages };
@@ -77,12 +79,19 @@ function pushBayerStage(
   label: string,
   raw: RawImage,
   data: Uint16Array,
+  previewCache: Map<Uint16Array, RgbImage>,
 ) {
+  let preview = previewCache.get(data);
+  if (!preview) {
+    preview = bayerToGrayscalePreview(raw, data);
+    previewCache.set(data, preview);
+  }
+
   stages.push({
     id,
     label,
     domain: "bayer",
-    preview: bayerToGrayscalePreview(raw, data),
+    preview,
   });
 }
 
@@ -624,10 +633,6 @@ function writeRgb(out: Uint8ClampedArray, width: number, x: number, y: number, r
   out[offset + 1] = g;
   out[offset + 2] = b;
   out[offset + 3] = 255;
-}
-
-function cloneRgb(image: RgbImage): RgbImage {
-  return { ...image, data: new Uint8ClampedArray(image.data) };
 }
 
 function maxRawValue(raw: RawImage): number {
