@@ -44,6 +44,24 @@ type TogglePath =
   | "nlm.enabled";
 type Language = "en" | "zh";
 
+const pipelineStageIds = [
+  "dpc",
+  "blc",
+  "aaf",
+  "awb",
+  "bnf",
+  "cnf",
+  "cfa",
+  "ccm",
+  "gac",
+  "csc",
+  "hsc",
+  "eeh",
+  "fcs",
+  "bcc",
+  "nlm",
+];
+
 const pipelineStageLabels = {
   en: ["DPC", "BLC", "AAF", "AWB", "BNF", "CNF", "CFA", "CCM", "GAC", "CSC", "HSC", "EEH", "FCS", "BCC", "NLM"],
   zh: [
@@ -324,8 +342,16 @@ export function App() {
         <aside className="pipeline-panel" aria-label="Pipeline stages">
           <h2>{t.pipeline}</h2>
           <ol>
-            {pipelineStageLabels[language].map((label) => (
-              <li key={label}>{label}</li>
+            {pipelineStageLabels[language].map((label, index) => (
+              <li key={pipelineStageIds[index]}>
+                <button
+                  type="button"
+                  className={selectedStage.id === pipelineStageIds[index] ? "is-active" : ""}
+                  onClick={() => setSelectedStageId(pipelineStageIds[index])}
+                >
+                  {label}
+                </button>
+              </li>
             ))}
           </ol>
           <div className="stage-picker">
@@ -368,93 +394,95 @@ export function App() {
 
         <aside className="parameter-panel" aria-label="ISP parameters">
           <h2>{t.parameters}</h2>
-          <ControlGroup title={t.deadPixel} enabled={config.dpc.enabled} onToggle={(value) => updateToggle("dpc.enabled", value)}>
-            <Slider label={t.threshold} min={0} max={1200} step={10} value={config.dpc.threshold} onChange={(value) => updateNumber("dpc.threshold", value)} />
-          </ControlGroup>
+          <div className="parameter-grid">
+            <ControlGroup title={t.deadPixel} enabled={config.dpc.enabled} onToggle={(value) => updateToggle("dpc.enabled", value)}>
+              <Slider label={t.threshold} min={0} max={1200} step={10} value={config.dpc.threshold} onChange={(value) => updateNumber("dpc.threshold", value)} />
+            </ControlGroup>
 
-          <ControlGroup title={t.blackLevel} enabled={config.blc.enabled} onToggle={(value) => updateToggle("blc.enabled", value)}>
-            <Slider label={t.level} min={0} max={512} step={1} value={config.blc.blackLevel} onChange={(value) => updateNumber("blc.blackLevel", value)} />
-          </ControlGroup>
+            <ControlGroup title={t.blackLevel} enabled={config.blc.enabled} onToggle={(value) => updateToggle("blc.enabled", value)}>
+              <Slider label={t.level} min={0} max={512} step={1} value={config.blc.blackLevel} onChange={(value) => updateNumber("blc.blackLevel", value)} />
+            </ControlGroup>
 
-          <ControlGroup title={t.antiAliasing} enabled={config.aaf.enabled} onToggle={(value) => updateToggle("aaf.enabled", value)}>
-            <p className="control-note">5x5 Bayer domain filter</p>
-          </ControlGroup>
+            <ControlGroup title={t.antiAliasing} enabled={config.aaf.enabled} onToggle={(value) => updateToggle("aaf.enabled", value)}>
+              <p className="control-note">5x5 Bayer domain filter</p>
+            </ControlGroup>
 
-          <ControlGroup title={t.whiteBalance} enabled={config.awb.enabled} onToggle={(value) => updateToggle("awb.enabled", value)}>
-            <Slider label="R" min={0.5} max={3} step={0.05} value={config.awb.rGain} onChange={(value) => updateNumber("awb.rGain", value)} />
-            <Slider label="G" min={0.5} max={3} step={0.05} value={config.awb.gGain} onChange={(value) => updateNumber("awb.gGain", value)} />
-            <Slider label="B" min={0.5} max={3} step={0.05} value={config.awb.bGain} onChange={(value) => updateNumber("awb.bGain", value)} />
-          </ControlGroup>
+            <ControlGroup title={t.whiteBalance} enabled={config.awb.enabled} onToggle={(value) => updateToggle("awb.enabled", value)}>
+              <Slider label="R" min={0.5} max={3} step={0.05} value={config.awb.rGain} onChange={(value) => updateNumber("awb.rGain", value)} />
+              <Slider label="G" min={0.5} max={3} step={0.05} value={config.awb.gGain} onChange={(value) => updateNumber("awb.gGain", value)} />
+              <Slider label="B" min={0.5} max={3} step={0.05} value={config.awb.bGain} onChange={(value) => updateNumber("awb.bGain", value)} />
+            </ControlGroup>
 
-          <ControlGroup title={t.bilateralNoise} enabled={config.bnf.enabled} onToggle={(value) => updateToggle("bnf.enabled", value)}>
-            <Slider label={t.strength} min={0} max={1} step={0.05} value={config.bnf.strength} onChange={(value) => updateNumber("bnf.strength", value)} />
-          </ControlGroup>
+            <ControlGroup title={t.bilateralNoise} enabled={config.bnf.enabled} onToggle={(value) => updateToggle("bnf.enabled", value)}>
+              <Slider label={t.strength} min={0} max={1} step={0.05} value={config.bnf.strength} onChange={(value) => updateNumber("bnf.strength", value)} />
+            </ControlGroup>
 
-          <ControlGroup title={t.chromaNoise} enabled={config.cnf.enabled} onToggle={(value) => updateToggle("cnf.enabled", value)}>
-            <Slider label={t.threshold} min={0} max={600} step={10} value={config.cnf.threshold} onChange={(value) => updateNumber("cnf.threshold", value)} />
-            <Slider label={t.strength} min={0} max={1} step={0.05} value={config.cnf.strength} onChange={(value) => updateNumber("cnf.strength", value)} />
-          </ControlGroup>
+            <ControlGroup title={t.chromaNoise} enabled={config.cnf.enabled} onToggle={(value) => updateToggle("cnf.enabled", value)}>
+              <Slider label={t.threshold} min={0} max={600} step={10} value={config.cnf.threshold} onChange={(value) => updateNumber("cnf.threshold", value)} />
+              <Slider label={t.strength} min={0} max={1} step={0.05} value={config.cnf.strength} onChange={(value) => updateNumber("cnf.strength", value)} />
+            </ControlGroup>
 
-          <ControlGroup title={t.cfa} enabled={config.cfa.enabled} onToggle={(value) => updateToggle("cfa.enabled", value)}>
-            <label className="select-row">
-              <span>{t.mode}</span>
-              <select value={config.cfa.mode} onChange={(event) => updateCfaMode(event.target.value as PipelineConfig["cfa"]["mode"])}>
-                <option value="bilinear">{t.bilinear}</option>
-                <option value="malvar">{t.malvar}</option>
-              </select>
-            </label>
-          </ControlGroup>
+            <ControlGroup title={t.cfa} enabled={config.cfa.enabled} onToggle={(value) => updateToggle("cfa.enabled", value)}>
+              <label className="select-row">
+                <span>{t.mode}</span>
+                <select value={config.cfa.mode} onChange={(event) => updateCfaMode(event.target.value as PipelineConfig["cfa"]["mode"])}>
+                  <option value="bilinear">{t.bilinear}</option>
+                  <option value="malvar">{t.malvar}</option>
+                </select>
+              </label>
+            </ControlGroup>
 
-          <ControlGroup title={t.ccm} enabled={config.ccm.enabled} onToggle={(value) => updateToggle("ccm.enabled", value)}>
-            <div className="matrix-grid" aria-label={t.ccm}>
-              {config.ccm.matrix.map((row, rowIndex) =>
-                row.map((value, columnIndex) => (
-                  <input
-                    key={`${rowIndex}-${columnIndex}`}
-                    type="number"
-                    min={-2}
-                    max={2}
-                    step={0.01}
-                    value={value}
-                    onChange={(event) => updateCcmValue(rowIndex, columnIndex, Number(event.target.value))}
-                    aria-label={`${t.ccm} ${rowIndex + 1}-${columnIndex + 1}`}
-                  />
-                )),
-              )}
-            </div>
-          </ControlGroup>
+            <ControlGroup title={t.ccm} enabled={config.ccm.enabled} onToggle={(value) => updateToggle("ccm.enabled", value)}>
+              <div className="matrix-grid" aria-label={t.ccm}>
+                {config.ccm.matrix.map((row, rowIndex) =>
+                  row.map((value, columnIndex) => (
+                    <input
+                      key={`${rowIndex}-${columnIndex}`}
+                      type="number"
+                      min={-2}
+                      max={2}
+                      step={0.01}
+                      value={value}
+                      onChange={(event) => updateCcmValue(rowIndex, columnIndex, Number(event.target.value))}
+                      aria-label={`${t.ccm} ${rowIndex + 1}-${columnIndex + 1}`}
+                    />
+                  )),
+                )}
+              </div>
+            </ControlGroup>
 
-          <ControlGroup title={t.gac} enabled={config.gac.enabled} onToggle={(value) => updateToggle("gac.enabled", value)}>
-            <Slider label={t.curve} min={0.6} max={3} step={0.05} value={config.gac.gamma} onChange={(value) => updateNumber("gac.gamma", value)} />
-          </ControlGroup>
+            <ControlGroup title={t.gac} enabled={config.gac.enabled} onToggle={(value) => updateToggle("gac.enabled", value)}>
+              <Slider label={t.curve} min={0.6} max={3} step={0.05} value={config.gac.gamma} onChange={(value) => updateNumber("gac.gamma", value)} />
+            </ControlGroup>
 
-          <ControlGroup title={t.csc} enabled={config.csc.enabled} onToggle={(value) => updateToggle("csc.enabled", value)}>
-            <p className="control-note">RGB/YUV matrix preview</p>
-          </ControlGroup>
+            <ControlGroup title={t.csc} enabled={config.csc.enabled} onToggle={(value) => updateToggle("csc.enabled", value)}>
+              <p className="control-note">RGB/YUV matrix preview</p>
+            </ControlGroup>
 
-          <ControlGroup title={t.hsc} enabled={config.hsc.enabled} onToggle={(value) => updateToggle("hsc.enabled", value)}>
-            <Slider label={t.hue} min={-180} max={180} step={1} value={config.hsc.hue} onChange={(value) => updateNumber("hsc.hue", value)} />
-            <Slider label={t.saturation} min={0} max={2} step={0.05} value={config.hsc.saturation} onChange={(value) => updateNumber("hsc.saturation", value)} />
-          </ControlGroup>
+            <ControlGroup title={t.hsc} enabled={config.hsc.enabled} onToggle={(value) => updateToggle("hsc.enabled", value)}>
+              <Slider label={t.hue} min={-180} max={180} step={1} value={config.hsc.hue} onChange={(value) => updateNumber("hsc.hue", value)} />
+              <Slider label={t.saturation} min={0} max={2} step={0.05} value={config.hsc.saturation} onChange={(value) => updateNumber("hsc.saturation", value)} />
+            </ControlGroup>
 
-          <ControlGroup title={t.edge} enabled={config.eeh.enabled} onToggle={(value) => updateToggle("eeh.enabled", value)}>
-            <Slider label={t.strength} min={0} max={1.5} step={0.05} value={config.eeh.strength} onChange={(value) => updateNumber("eeh.strength", value)} />
-            <Slider label={t.threshold} min={0} max={80} step={1} value={config.eeh.threshold} onChange={(value) => updateNumber("eeh.threshold", value)} />
-          </ControlGroup>
+            <ControlGroup title={t.edge} enabled={config.eeh.enabled} onToggle={(value) => updateToggle("eeh.enabled", value)}>
+              <Slider label={t.strength} min={0} max={1.5} step={0.05} value={config.eeh.strength} onChange={(value) => updateNumber("eeh.strength", value)} />
+              <Slider label={t.threshold} min={0} max={80} step={1} value={config.eeh.threshold} onChange={(value) => updateNumber("eeh.threshold", value)} />
+            </ControlGroup>
 
-          <ControlGroup title={t.falseColor} enabled={config.fcs.enabled} onToggle={(value) => updateToggle("fcs.enabled", value)}>
-            <Slider label={t.strength} min={0} max={1} step={0.05} value={config.fcs.strength} onChange={(value) => updateNumber("fcs.strength", value)} />
-            <Slider label={t.threshold} min={0} max={80} step={1} value={config.fcs.threshold} onChange={(value) => updateNumber("fcs.threshold", value)} />
-          </ControlGroup>
+            <ControlGroup title={t.falseColor} enabled={config.fcs.enabled} onToggle={(value) => updateToggle("fcs.enabled", value)}>
+              <Slider label={t.strength} min={0} max={1} step={0.05} value={config.fcs.strength} onChange={(value) => updateNumber("fcs.strength", value)} />
+              <Slider label={t.threshold} min={0} max={80} step={1} value={config.fcs.threshold} onChange={(value) => updateNumber("fcs.threshold", value)} />
+            </ControlGroup>
 
-          <ControlGroup title={t.bcc} enabled={config.bcc.enabled} onToggle={(value) => updateToggle("bcc.enabled", value)}>
-            <Slider label={t.brightness} min={-80} max={80} step={1} value={config.bcc.brightness} onChange={(value) => updateNumber("bcc.brightness", value)} />
-            <Slider label={t.contrast} min={-0.8} max={1.2} step={0.05} value={config.bcc.contrast} onChange={(value) => updateNumber("bcc.contrast", value)} />
-          </ControlGroup>
+            <ControlGroup title={t.bcc} enabled={config.bcc.enabled} onToggle={(value) => updateToggle("bcc.enabled", value)}>
+              <Slider label={t.brightness} min={-80} max={80} step={1} value={config.bcc.brightness} onChange={(value) => updateNumber("bcc.brightness", value)} />
+              <Slider label={t.contrast} min={-0.8} max={1.2} step={0.05} value={config.bcc.contrast} onChange={(value) => updateNumber("bcc.contrast", value)} />
+            </ControlGroup>
 
-          <ControlGroup title={t.nlm} enabled={config.nlm.enabled} onToggle={(value) => updateToggle("nlm.enabled", value)}>
-            <Slider label={t.strength} min={0} max={1} step={0.05} value={config.nlm.strength} onChange={(value) => updateNumber("nlm.strength", value)} />
-          </ControlGroup>
+            <ControlGroup title={t.nlm} enabled={config.nlm.enabled} onToggle={(value) => updateToggle("nlm.enabled", value)}>
+              <Slider label={t.strength} min={0} max={1} step={0.05} value={config.nlm.strength} onChange={(value) => updateNumber("nlm.strength", value)} />
+            </ControlGroup>
+          </div>
         </aside>
       </section>
     </main>
